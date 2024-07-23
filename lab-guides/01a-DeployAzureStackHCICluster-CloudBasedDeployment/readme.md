@@ -83,7 +83,7 @@ Deployment result
 
 In this task you will create objects in Active Directory. Group Managed Service accounts are no longer created, KDC is no longer needed.
 
-This task will be performed in elevated powershell window in Management machine
+This task will be performed in elevated powershell window in DC machine
 
 ![](./media/vmconnect01.png)
 
