@@ -38,7 +38,7 @@ $LabConfig=@{AllowedVLANs="1-10,711-719" ; DomainAdminName='LabAdmin'; AdminPass
 
 #Azure Stack HCI 23H2
 #labconfig will not domain join VMs
-1..2 | ForEach-Object {$LABConfig.VMs += @{ VMName = "LTPNode$_" ; Configuration = 'S2D' ; ParentVHD = 'AzSHCI23H2_G2_Preview.vhdx' ; HDDNumber = 4 ; HDDSize= 2TB ; MemoryStartupBytes= 20GB; VMProcessorCount="MAX" ; vTPM=$true ; Unattend="NoDjoin" ; NestedVirt=$true }}
+1..2 | ForEach-Object {$LABConfig.VMs += @{ VMName = "LTPNode$_" ; Configuration = 'S2D' ; ParentVHD = 'AzSHCI23H2_G2_Preview.vhdx' ; HDDNumber = 4 ; HDDSize= 2TB ; MemoryStartupBytes= 24GB; VMProcessorCount="MAX" ; vTPM=$true ; Unattend="NoDjoin" ; NestedVirt=$true }}
 
 #Windows Admin Center in GW mode
 $LabConfig.VMs += @{ VMName = 'WACGW' ; ParentVHD = 'Win2025Core_G2.vhdx'; MGMTNICs=1}
@@ -68,7 +68,7 @@ These prerequisites are needed to successfully register server into the Azure. F
 ```PowerShell
 $GatewayName="LTPClus01-ArcGW"
 $ResourceGroupName="LTPClus01-RG"
-$Location="eastus"
+$Location="westeurope"
 
 #login to azure
     #download Azure module
@@ -361,59 +361,6 @@ $LCMCredentials= New-Object System.Management.Automation.PSCredential ($LCMUserN
     Install-WindowsFeature -Name "RSAT-ADDS","RSAT-Clustering"
 #endregion
 
-```
-
-### Configure iDRACs (optional)
-
-```PowerShell
-#$iDRACCredentials=Get-Credential #grab iDRAC credentials
-$iDracUsername="LabAdmin"
-$iDracPassword="LS1setup!"
-$SecureStringPassword = ConvertTo-SecureString $iDracPassword -AsPlainText -Force
-$iDRACCredentials = New-Object System.Management.Automation.PSCredential ($iDracUsername, $SecureStringPassword)
-#IP = Idrac IP Address, USBNICIP = IP Address of  that will be configured in OS to iDRAC Pass-through USB interface
-#You can configure all to be 169.254.0.1. Openmanage extension still recommends having each IP to be unique. on node 1 it would be 169.254.11.1 iDRAC and +1 in OS (169.254.11.2)
-$iDRACs=@()
-$iDRACs+=@{IP="192.168.100.139" ; USBNICIP="169.254.11.1"}
-$iDRACs+=@{IP="192.168.100.140" ; USBNICIP="169.254.11.3"}
-
-#ignoring cert is needed for posh5. In 6 and newer you can just add -SkipCertificateCheck to Invoke-WebRequest
-function Ignore-SSLCertificates {
-    $Provider = New-Object Microsoft.CSharp.CSharpCodeProvider
-    $Compiler = $Provider.CreateCompiler()
-    $Params = New-Object System.CodeDom.Compiler.CompilerParameters
-    $Params.GenerateExecutable = $False
-    $Params.GenerateInMemory = $true
-    $Params.IncludeDebugInformation = $False
-    $Params.ReferencedAssemblies.Add("System.DLL") > $null
-    $TASource=@'
-    namespace Local.ToolkitExtensions.Net.CertificatePolicy
-    {
-        public class TrustAll : System.Net.ICertificatePolicy
-        {
-            public bool CheckValidationResult(System.Net.ServicePoint sp,System.Security.Cryptography.X509Certificates.X509Certificate cert, System.Net.WebRequest req, int problem)
-            {
-                return true;
-            }
-        }
-    }
-'@ 
-    $TAResults=$Provider.CompileAssemblyFromSource($Params,$TASource)
-    $TAAssembly=$TAResults.CompiledAssembly
-    $TrustAll = $TAAssembly.CreateInstance("Local.ToolkitExtensions.Net.CertificatePolicy.TrustAll")
-    [System.Net.ServicePointManager]::CertificatePolicy = $TrustAll
-}
-Ignore-SSLCertificates
-
-#Patch Enable OS to iDrac Pass-through and configure IP
-$Headers=@{"Accept"="application/json"}
-$ContentType='application/json'
-foreach ($iDRAC in $iDRACs){
-    $uri="https://$($idrac.IP)/redfish/v1/Managers/iDRAC.Embedded.1/Attributes"
-    $JSONBody=@{"Attributes"=@{"OS-BMC.1.UsbNicIpAddress"="$($iDRAC.USBNICIP)";"OS-BMC.1.AdminState"="Enabled"}} | ConvertTo-Json -Compress
-    Invoke-WebRequest -Body $JsonBody -Method Patch -ContentType $ContentType -Headers $Headers -Uri $uri -Credential $iDRACCredentials
-}
- 
 ```
 
 ### Deploy Azure Stack from Azure Portal
