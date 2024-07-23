@@ -25,6 +25,7 @@ Guides focused at deploying and operation of Azure Stack HCI Clusters
 ## Tips & Tricks
 
 * [01 Generate Environmental Checker URLs](tips&tricks/01-EnvironmentalCheckerURLs/)
+* [02 Experience from AGE](tips&tricks/02-Experience from AGE/)
 
 ## Deprecated labs
 
