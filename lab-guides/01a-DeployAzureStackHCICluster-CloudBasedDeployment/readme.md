@@ -88,7 +88,7 @@ $AsHCIOUName="OU=LabXXXASClus,DC=Corp,DC=contoso,DC=com"
 #$Servers="ASNode1","ASNode2"
 #$DomainFQDN=$env:USERDNSDOMAIN
 #$ClusterName="LabXXXASClus"
-#$Prefix="ASClus01"
+#$Prefix="LabXXXASClus"
 $LCMUserName="LabXXXASClus-LCMUser"
 $LCMPassword="LS1setup!LS1setup!"
 $SecuredPassword = ConvertTo-SecureString $LCMPassword -AsPlainText -Force
