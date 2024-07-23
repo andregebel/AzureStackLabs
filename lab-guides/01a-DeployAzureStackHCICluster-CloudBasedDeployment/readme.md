@@ -40,6 +40,18 @@ You can start with the Deploy.ps1 to the deploy the VMs we need for this lab
 
 > to cleanup the VMs you can run Cleanup.ps1
 
+## Credentials
+
+> also in the LabConfig
+
+ASNodes's
+User: Administrator (because not domain joined)
+Password: LS1setup! (later changed for Azure onboarding)
+
+DC & WAC
+User: LabAdmin
+Password: LS1setup!
+
 ## Prerequisites
 
 * Hydrated MSLab with LabConfig from [01-HydrateMSLab](../../admin-guides/01-HydrateMSLab/readme.md)
