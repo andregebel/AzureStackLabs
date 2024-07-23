@@ -26,7 +26,9 @@ You can also deploy physical machines with [MDT](../../admin-guides/03-DeployPhy
 
 You can deploy physical machines with simple click-next-next from ISO. Make sure correct OS disk is selected and if DHCP is not available, configure an IP address and rename computers.
 
-> Cloud Deployment is now supported on AX nodes.
+## Change Placeholder
+
+XXX = bestserv shortname
 
 ## Prerequisites
 
@@ -82,12 +84,12 @@ This task will be performed in elevated powershell window in Management machine
 > you can also notice, that there is an account for deployment being created. It will be used once 
 
 ```PowerShell
-$AsHCIOUName="OU=ASClus01,DC=Corp,DC=contoso,DC=com"
+$AsHCIOUName="OU=LabXXXASClus,DC=Corp,DC=contoso,DC=com"
 #$Servers="ASNode1","ASNode2"
 #$DomainFQDN=$env:USERDNSDOMAIN
-#$ClusterName="ASClus01"
+#$ClusterName="LabXXXASClus"
 #$Prefix="ASClus01"
-$LCMUserName="ASClus01-LCMUser"
+$LCMUserName="LabXXXASClus-LCMUser"
 $LCMPassword="LS1setup!LS1setup!"
 $SecuredPassword = ConvertTo-SecureString $LCMPassword -AsPlainText -Force
 $LCMCredentials= New-Object System.Management.Automation.PSCredential ($LCMUserName,$SecuredPassword)
@@ -133,7 +135,7 @@ Keep the PowerShell window open for the next task
 > Note: you might need to disable WAM https://learn.microsoft.com/en-us/powershell/azure/authenticate-interactive?view=azps-12.0.0#disable-wam as tenantID has to be specified by default (Update-AzConfig -EnableLoginByWam $false)
 
 ```PowerShell
-$ResourceGroupName="ASClus01-RG"
+$ResourceGroupName="LabXXXASClus-RG"
 $Location="westeurope"
 
 #login to azure
@@ -208,7 +210,7 @@ This task will install Arc agent, Arc extensions and will set RBAC roles to ARC 
 
 ```PowerShell
 $Servers="ASNode1","ASNode2"
-$ResourceGroupName="ASClus01-RG"
+$ResourceGroupName="LabXXXASClus-RG"
 $TenantID=(Get-AzContext).Tenant.ID
 $SubscriptionID=(Get-AzContext).Subscription.ID
 $Location="westeurope"
@@ -445,8 +447,8 @@ Invoke-Command -ComputerName $servers -ScriptBlock {
 
 ```
 Basics:
-    Resource Group: ASClus-01-RG
-    ClusterName:    ASClus01
+    Resource Group: LabXXXASClus-RG
+    ClusterName:    LabXXXASClus
     Keyvaultname:   <Just generate new>
 
 Configuration:
@@ -471,15 +473,15 @@ Networking
     DNS Server:                 10.0.0.1
 
 Management
-    Custom location name:       ASClus01CustomLocation (default)\
+    Custom location name:       LabXXXASClusCL
     Azure storage account name: <just generate new>
 
     Domain:                     corp.contoso.com
-    Computer name prefix:       ASClus01
+    Computer name prefix:       LabXXXASClus
     OU:                         OU=ASClus01,DC=Corp,DC=contoso,DC=com
 
     Deployment account:
-        Username:               ASClus01-LCMUser
+        Username:               LabXXXASClus-LCMUser
         Password:               LS1setup!LS1setup!
 
     Local Administrator
