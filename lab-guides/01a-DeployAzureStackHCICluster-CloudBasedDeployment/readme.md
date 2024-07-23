@@ -26,6 +26,8 @@ You can also deploy physical machines with [MDT](../../admin-guides/03-DeployPhy
 
 You can deploy physical machines with simple click-next-next from ISO. Make sure correct OS disk is selected and if DHCP is not available, configure an IP address and rename computers.
 
+This Lab is modified by AGE
+
 ## Change Placeholder
 
 XXX = bestserv shortname
