@@ -36,7 +36,9 @@ XXX = bestserv shortname
 
 The HyperV-Lab-0X VMs contain MSlab, Labconfig and the ISOs under E:\MSLab
 
-You can start with the deploy.ps1 to the deploy the VMs we need for this lab
+You can start with the Deploy.ps1 to the deploy the VMs we need for this lab
+
+-> to cleanup the VMs you can run Cleanup.ps1
 
 ## Prerequisites
 
