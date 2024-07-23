@@ -48,14 +48,16 @@ You can notice, that there are VLANs 711-719.
 $LabConfig=@{AllowedVLANs="1-10,711-719" ; DomainAdminName='LabAdmin'; AdminPassword='LS1setup!' ; DCEdition='4'; Internet=$true; TelemetryLevel='Full' ; TelemetryNickname='' ; AdditionalNetworksConfig=@(); VMs=@()}
 
 #Azure Stack HCI 23H2
-#labconfig will not domain join VMs
-1..2 | ForEach-Object {$LABConfig.VMs += @{ VMName = "ASNode$_" ; Configuration = 'S2D' ; ParentVHD = 'AzSHCI23H2_G2.vhdx' ; HDDNumber = 4 ; HDDSize= 2TB ; MemoryStartupBytes= 20GB; VMProcessorCount="MAX" ; vTPM=$true ; Unattend="NoDjoin" ; NestedVirt=$true }}
+#labconfig will not domain join VMs, will add "Tools disk" and will also execute powershell command to make this tools disk online.
+1..2 | ForEach-Object {$LABConfig.VMs += @{ VMName = "ASNode$_" ; Configuration = 'S2D' ; ParentVHD = 'AzSHCI23H2_G2.vhdx' ; HDDNumber = 4 ; HDDSize= 1TB ; MemoryStartupBytes= 20GB; VMProcessorCount="MAX" ; vTPM=$true ; Unattend="NoDjoin" ; NestedVirt=$true }}
 
 #Windows Admin Center in GW mode
 $LabConfig.VMs += @{ VMName = 'WACGW' ; ParentVHD = 'Win2022Core_G2.vhdx'; MGMTNICs=1}
 
 #Management machine
-$LabConfig.VMs += @{ VMName = 'Management' ; ParentVHD = 'Win2022_G2.vhdx'; MGMTNICs=1 ; AddToolsVHD=$True }
+#Not deployed, to safe RAM
+#$LabConfig.VMs += @{ VMName = 'Management' ; ParentVHD = 'Win2022_G2.vhdx'; MGMTNICs=1 ; AddToolsVHD=$True }
+
  
 ```
 
@@ -132,7 +134,7 @@ Keep the PowerShell window open for the next task
 
 ```PowerShell
 $ResourceGroupName="ASClus01-RG"
-$Location="eastus"
+$Location="westeurope"
 
 #login to azure
     #download Azure module
@@ -209,7 +211,7 @@ $Servers="ASNode1","ASNode2"
 $ResourceGroupName="ASClus01-RG"
 $TenantID=(Get-AzContext).Tenant.ID
 $SubscriptionID=(Get-AzContext).Subscription.ID
-$Location="eastus"
+$Location="westeurope"
 $Cloud="AzureCloud"
 
 #Since machines are not domain joined, let's do some preparation
@@ -290,106 +292,7 @@ Invoke-Command -ComputerName $servers -ScriptBlock {
  
 ```
 
-**Step 3** Install Dell Drivers
-
-```PowerShell
-$DSUDownloadFolder="$env:USERPROFILE\Downloads\DSU"
-
-#Set up web client to download files with autheticated web request
-$WebClient = New-Object System.Net.WebClient
-#$proxy = new-object System.Net.WebProxy
-$proxy = [System.Net.WebRequest]::GetSystemWebProxy()
-$proxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials
-#$proxy.Address = $proxyAdr
-#$proxy.useDefaultCredentials = $true
-$WebClient.proxy = $proxy
-
-#Download DSU
-#https://github.com/DellProSupportGse/Tools/blob/main/DART.ps1
-#download latest DSU to Downloads
-    $LatestDSU="https://dl.dell.com/FOLDER10889507M/1/Systems-Management_Application_RPW7K_WN64_2.0.2.3_A00.EXE"
-    if (-not (Test-Path $DSUDownloadFolder -ErrorAction Ignore)){New-Item -Path $DSUDownloadFolder -ItemType Directory}
-    #Start-BitsTransfer -Source $LatestDSU -Destination $DSUDownloadFolder\DSU.exe
-    $WebClient.DownloadFile($LatestDSU,"$DSUDownloadFolder\DSU.exe")
-
-#Download catalog and unpack
-    #Start-BitsTransfer -Source "https://downloads.dell.com/catalog/ASHCI-Catalog.xml.gz" -Destination "$DSUDownloadFolder\ASHCI-Catalog.xml.gz"
-    $WebClient.DownloadFile("https://downloads.dell.com/catalog/ASHCI-Catalog.xml.gz","$DSUDownloadFolder\ASHCI-Catalog.xml.gz")     
-
-    #unzip gzip to a folder https://scatteredcode.net/download-and-extract-gzip-tar-with-powershell/
-    Function Expand-GZipArchive{
-        Param(
-            $infile,
-            $outfile = ($infile -replace '\.gz$','')
-            )
-        $input = New-Object System.IO.FileStream $inFile, ([IO.FileMode]::Open), ([IO.FileAccess]::Read), ([IO.FileShare]::Read)
-        $output = New-Object System.IO.FileStream $outFile, ([IO.FileMode]::Create), ([IO.FileAccess]::Write), ([IO.FileShare]::None)
-        $gzipStream = New-Object System.IO.Compression.GzipStream $input, ([IO.Compression.CompressionMode]::Decompress)
-        $buffer = New-Object byte[](1024)
-        while($true){
-            $read = $gzipstream.Read($buffer, 0, 1024)
-            if ($read -le 0){break}
-            $output.Write($buffer, 0, $read)
-            }
-        $gzipStream.Close()
-        $output.Close()
-        $input.Close()
-    }
-    Expand-GZipArchive "$DSUDownloadFolder\ASHCI-Catalog.xml.gz" "$DSUDownloadFolder\ASHCI-Catalog.xml"
-
-#upload DSU and catalog to servers
-$Sessions=New-PSSession -ComputerName $Servers -Credential $Credentials
-Invoke-Command -Session $Sessions -ScriptBlock {
-    if (-not (Test-Path $using:DSUDownloadFolder -ErrorAction Ignore)){New-Item -Path $using:DSUDownloadFolder -ItemType Directory}
-}
-foreach ($Session in $Sessions){
-    Copy-Item -Path "$DSUDownloadFolder\DSU.exe" -Destination "$DSUDownloadFolder" -ToSession $Session -Force -Recurse
-    Copy-Item -Path "$DSUDownloadFolder\ASHCI-Catalog.xml" -Destination "$DSUDownloadFolder" -ToSession $Session -Force -Recurse
-}
-
-#install DSU
-Invoke-Command -Session $Sessions -ScriptBlock {
-    Start-Process -FilePath "$using:DSUDownloadFolder\DSU.exe" -ArgumentList "/silent" -Wait 
-}
-
-#Check compliance
-Invoke-Command -Session $Sessions -ScriptBlock {
-    & "C:\Program Files\Dell\DELL System Update\DSU.exe" --compliance --output-format="json" --output="$using:DSUDownloadFolder\Compliance.json" --catalog-location="$using:DSUDownloadFolder\ASHCI-Catalog.xml"
-}
-
-#collect results
-$Compliance=@()
-foreach ($Session in $Sessions){
-    $json=Invoke-Command -Session $Session -ScriptBlock {Get-Content "$using:DSUDownloadFolder\Compliance.json"}
-    $object = $json | ConvertFrom-Json 
-    $components=$object.SystemUpdateCompliance.UpdateableComponent
-    $components | Add-Member -MemberType NoteProperty -Name "ClusterName" -Value $ClusterName
-    $components | Add-Member -MemberType NoteProperty -Name "ServerName" -Value $Session.ComputerName
-    $Compliance+=$Components
-}
-
-#display results
-$Compliance | Out-GridView
-
-#Or just choose what updates to install
-#$Compliance=$Compliance | Out-GridView -OutputMode Multiple
-
-#or Select only NIC drivers/firmware (as the rest will be processed by SBE)
-#$Compliance=$Compliance | Where-Object categoryType -eq "NI"
-
-#Install Dell updates https://www.dell.com/support/home/en-us/product-support/product/system-update/docs
-Invoke-Command -Session $Sessions -ScriptBlock {
-    $Packages=(($using:Compliance | Where-Object {$_.ServerName -eq $env:computername -and $_.compliancestatus -eq $false}))
-    if ($Packages){
-        $UpdateNames=($packages.PackageFilePath | Split-Path -Leaf) -join ","
-        & "C:\Program Files\Dell\DELL System Update\DSU.exe" --catalog-location="$using:DSUDownloadFolder\ASHCI-Catalog.xml" --update-list="$UpdateNames" --apply-upgrades --apply-downgrades
-    }
-}
-$Sessions | Remove-PSSession
- 
-```
-
-**Step 4** Restart servers to finish Features, Cumulative Updates and Drivers/Firmware installation
+**Step 4** Restart servers to finish Features, Cumulative Updates
 
 ```PowerShell
 #restart servers to finish Installation
@@ -399,19 +302,6 @@ Start-Sleep 20 #Failsafe as Hyper-V needs 2 reboots and sometimes it happens, th
 Foreach ($Server in $Servers){
     do{$Test= Test-NetConnection -ComputerName $Server -CommonTCPPort WINRM}while ($test.TcpTestSucceeded -eq $False)
 }
- 
-```
-
-**Step 5** Populate SBE Package on nodes (Dell AX Nodes)
-
-```PowerShell
-        #download SBE 2405 package to nodes
-        Invoke-Command -computername $Servers -scriptblock {
-            Start-BitsTransfer -Source https://dl.dell.com/FOLDER11684237M/1/Bundle_SBE_Dell_AS-HCI-AX_4.1.2405.2001.zip -Destination $env:userprofile\Downloads\Bundle_SBE_Dell_AS-HCI-AX_4.1.2405.2001.zip
-            #unzip to c:\SBE
-            New-Item -Path c:\ -Name SBE -ItemType Directory -ErrorAction Ignore
-            Expand-Archive -LiteralPath $env:userprofile\Downloads\Bundle_SBE_Dell_AS-HCI-AX_4.1.2405.2001.zip -DestinationPath C:\SBE
-        } -Credential $Credentials
  
 ```
 
@@ -540,59 +430,6 @@ Invoke-Command -ComputerName $servers -ScriptBlock {
     Invoke-Command -ComputerName $servers -ScriptBlock {
         Set-LocalUser -Name Administrator -AccountNeverExpires -Password (ConvertTo-SecureString "LS1setup!LS1setup!" -AsPlainText -Force)
     } -Credential $Credentials
- 
-```
-
-**Step 5** Optional - configure iDRAC IP adresses and make sure passthrough interface is enabled
-
-```PowerShell
-#$iDRACCredentials=Get-Credential #grab iDRAC credentials
-$iDracUsername="LabAdmin"
-$iDracPassword="LS1setup!"
-$SecureStringPassword = ConvertTo-SecureString $iDracPassword -AsPlainText -Force
-$iDRACCredentials = New-Object System.Management.Automation.PSCredential ($iDracUsername, $SecureStringPassword)
-#IP = Idrac IP Address, USBNICIP = IP Address of  that will be configured in OS to iDRAC Pass-through USB interface
-#You can configure all to be 169.254.0.1. Openmanage extension still recommends having each IP to be unique. on node 1 it would be 169.254.11.1 iDRAC and +1 in OS (169.254.11.2)
-$iDRACs=@()
-$iDRACs+=@{IP="192.168.100.139" ; USBNICIP="169.254.11.1"}
-$iDRACs+=@{IP="192.168.100.140" ; USBNICIP="169.254.11.3"}
-
-#ignoring cert is needed for posh5. In 6 and newer you can just add -SkipCertificateCheck to Invoke-WebRequest
-function Ignore-SSLCertificates {
-    $Provider = New-Object Microsoft.CSharp.CSharpCodeProvider
-    $Compiler = $Provider.CreateCompiler()
-    $Params = New-Object System.CodeDom.Compiler.CompilerParameters
-    $Params.GenerateExecutable = $False
-    $Params.GenerateInMemory = $true
-    $Params.IncludeDebugInformation = $False
-    $Params.ReferencedAssemblies.Add("System.DLL") > $null
-    $TASource=@'
-    namespace Local.ToolkitExtensions.Net.CertificatePolicy
-    {
-        public class TrustAll : System.Net.ICertificatePolicy
-        {
-            public bool CheckValidationResult(System.Net.ServicePoint sp,System.Security.Cryptography.X509Certificates.X509Certificate cert, System.Net.WebRequest req, int problem)
-            {
-                return true;
-            }
-        }
-    }
-'@ 
-    $TAResults=$Provider.CompileAssemblyFromSource($Params,$TASource)
-    $TAAssembly=$TAResults.CompiledAssembly
-    $TrustAll = $TAAssembly.CreateInstance("Local.ToolkitExtensions.Net.CertificatePolicy.TrustAll")
-    [System.Net.ServicePointManager]::CertificatePolicy = $TrustAll
-}
-Ignore-SSLCertificates
-
-#Patch Enable OS to iDrac Pass-through and configure IP
-$Headers=@{"Accept"="application/json"}
-$ContentType='application/json'
-foreach ($iDRAC in $iDRACs){
-    $uri="https://$($idrac.IP)/redfish/v1/Managers/iDRAC.Embedded.1/Attributes"
-    $JSONBody=@{"Attributes"=@{"OS-BMC.1.UsbNicIpAddress"="$($iDRAC.USBNICIP)";"OS-BMC.1.AdminState"="Enabled"}} | ConvertTo-Json -Compress
-    Invoke-WebRequest -Body $JsonBody -Method Patch -ContentType $ContentType -Headers $Headers -Uri $uri -Credential $iDRACCredentials
-}
  
 ```
 
