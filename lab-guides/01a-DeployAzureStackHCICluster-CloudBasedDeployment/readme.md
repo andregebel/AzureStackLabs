@@ -32,19 +32,25 @@ This Lab is modified by AGE
 
 XXX = bestserv shortname
 
+## Prepared files
+
+The HyperV-Lab-0X VMs contain MSlab, Labconfig and the ISOs under E:\MSLab
+
+You can start with the deploy.ps1 to the deploy the VMs we need for this lab
+
 ## Prerequisites
 
 * Hydrated MSLab with LabConfig from [01-HydrateMSLab](../../admin-guides/01-HydrateMSLab/readme.md)
 
 * Understand [how MSLab works](../../admin-guides/02-WorkingWithMSLab/readme.md)
 
-* Make sure you hydrate Azure Stack HCI 23H2 VHD using CreateParentDisk.ps1 located in ParentDisks folder
+* Make sure you hydrate Azure Stack HCI 23H2 VHD using CreateParentDisk.ps1 located in ParentDisks folder -done
 
 * Note: this lab uses ~50GB RAM. To reduce amount of RAM, you would need to reduce number of nodes.
 
 ## LabConfig
 
-Below LabConfig will deploy 4 nodes for Azure Stack HCI 23H2 that are not domain joined.
+Below LabConfig will deploy 2 nodes for Azure Stack HCI 23H2 that are not domain joined.
 
 You can notice, that there are VLANs 711-719.
 
