@@ -157,7 +157,7 @@ Keep the PowerShell window open for the next task
 > Note: you might need to disable WAM https://learn.microsoft.com/en-us/powershell/azure/authenticate-interactive?view=azps-12.0.0#disable-wam as tenantID has to be specified by default (Update-AzConfig -EnableLoginByWam $false)
 
 ```PowerShell
-$ResourceGroupName="LabXXXASClus-RG"
+$ResourceGroupName="RG-LabXXXASClus"
 $Location="westeurope"
 
 #login to azure
@@ -232,7 +232,7 @@ This task will install Arc agent, Arc extensions and will set RBAC roles to ARC 
 
 ```PowerShell
 $Servers="ASNode1","ASNode2"
-$ResourceGroupName="LabXXXASClus-RG"
+$ResourceGroupName="RG-LabXXXASClus"
 $TenantID=(Get-AzContext).Tenant.ID
 $SubscriptionID=(Get-AzContext).Subscription.ID
 $Location="westeurope"
@@ -469,7 +469,7 @@ Invoke-Command -ComputerName $servers -ScriptBlock {
 
 ```
 Basics:
-    Resource Group: LabXXXASClus-RG
+    Resource Group: RG-LabXXXASClus
     ClusterName:    LabXXXASClus
     Keyvaultname:   <Just generate new>
 
