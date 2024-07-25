@@ -40,3 +40,16 @@ https://learn.microsoft.com/en-us/azure-stack/hci/manage/manage-bitlocker
 
 ## The created switch must be used for the Logical Network!
 https://learn.microsoft.com/de-de/azure/aks/hybrid/aks-networks?tabs=azureportal
+
+
+## Windows Admin Center
+Why do i still need the Windows Admin Center in 23H2??
+Some settings are still only available in the Windows Admin Center, for example:
+- Nested Virtualization
+- MAC address spoofing on the network adapter (e.g. for Nested Virtualization)
+- Extensions for Hardware Management (e.g. Lenovo XCLarity)
+
+## Classic administrative tools
+- Hyper-V Manager
+- Failover Cluster Manager
+These tools are still very useful for managing the Azure Stack.
