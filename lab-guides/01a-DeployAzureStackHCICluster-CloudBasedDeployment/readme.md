@@ -48,7 +48,7 @@ ASNodes's
 User: Administrator (because not domain joined)
 Password: LS1setup! (later changed for Azure onboarding)
 
-DC & WAC
+DC, Management & WAC
 User: LabAdmin
 Password: LS1setup!
 
@@ -79,8 +79,7 @@ $LabConfig=@{AllowedVLANs="1-10,711-719" ; DomainAdminName='LabAdmin'; AdminPass
 $LabConfig.VMs += @{ VMName = 'WACGW' ; ParentVHD = 'Win2022Core_G2.vhdx'; MGMTNICs=1}
 
 #Management machine
-#Not deployed, to safe RAM
-#$LabConfig.VMs += @{ VMName = 'Management' ; ParentVHD = 'Win2022_G2.vhdx'; MGMTNICs=1 ; AddToolsVHD=$True }
+$LabConfig.VMs += @{ VMName = 'Management' ; ParentVHD = 'Win2022_G2.vhdx'; MGMTNICs=1 ; AddToolsVHD=$True }
 
  
 ```
@@ -95,7 +94,7 @@ Deployment result
 
 In this task you will create objects in Active Directory. Group Managed Service accounts are no longer created, KDC is no longer needed.
 
-This task will be performed in elevated powershell window in DC machine
+This task will be performed in elevated powershell window in Management machine
 
 ![](./media/vmconnect01.png)
 
