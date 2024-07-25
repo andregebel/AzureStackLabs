@@ -53,3 +53,13 @@ Some settings are still only available in the Windows Admin Center, for example:
 - Hyper-V Manager
 - Failover Cluster Manager
 These tools are still very useful for managing the Azure Stack.
+
+## Script Collection.
+In this folder you will find a ZIP “AzureStackHCIScripts.zip” which contains the following scripts about:
+
+Clean Disks AZS.ps1 - Clean all non OS-Disks
+Network.ps1 - for 22H2
+Register.ps1 - for 22H2
+Resource-Based Delegation.ps1 - for 22H2
+SSO WAC.ps1 - Single Sign On for Windows Admin Center
+Windows Admin Center Cert 20 Years.ps1 - Create Certs for the Windows Admin Center with 20 years duration
