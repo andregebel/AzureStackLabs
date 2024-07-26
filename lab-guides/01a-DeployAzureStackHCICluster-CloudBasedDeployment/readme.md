@@ -250,7 +250,7 @@ Set-Item WSMan:\localhost\Client\TrustedHosts -Value $($TrustedHosts -join ',') 
  
 ```
 
-**Step 1** Wipe existing data on Data disks (applicable to physical hardware only as MSLab deploys clean disks).
+**Step 1.1** Wipe existing data on Data disks (applicable to physical hardware only as MSLab deploys clean disks).
 
 > If Disks are not wiped (contains spaces), validation will fail in "Azure Stack HCI Hardware" step.
 
