@@ -498,8 +498,7 @@ Management
     Azure storage account name: <just generate new>
 
     Domain:                     corp.contoso.com
-    Computer name prefix:       LabXXXASClus
-    OU:                         OU=ASClus01,DC=Corp,DC=contoso,DC=com
+    OU:                         OU=LabXXXASClus,DC=Corp,DC=contoso,DC=com
 
     Deployment account:
         Username:               LabXXXASClus-LCMUser
